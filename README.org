@@ -90,7 +90,7 @@
 
 * 5. 풀이
 
-제출한 SQL에서 최종 결과를 만들어내는 과정을 순서대로 훓어보도록 하겠습니다. 
+제출한 SQL에서 최종 결과를 만들어내는 과정을 순서대로 훓어보도록 하겠습니다.
 
 ** 5.1 동적 테이블이 생성
 
@@ -99,7 +99,7 @@
 필요합니다.
 
 각 월마다 가지는 일의 숫자가 다르다는 점은 차처하더라도, MySQL은 1부터 n개의
-숫자를 가지는 '임의의 테이블'을 동적으로 만들수 있는 [[http://www.postgresql.org/docs/9.1/static/functions-srf.html][우아한 방법이]] 없습니다. 
+숫자를 가지는 '임의의 테이블'을 동적으로 만들수 있는 [[http://www.postgresql.org/docs/9.1/static/functions-srf.html][우아한 방법이]] 없습니다.
 
 따라서 1부터 35 까지의 숫자를 생성하는 일반적인 방법은 보통 다음 [[http://stackoverflow.com/questions/304461/generate-an-integer-sequence-in-mysql][두가지]]가
 있습니다.
@@ -177,7 +177,7 @@
 '2015-07-1' 부터 '2015-07-35'로 변환됩니다.
 
 그리고 MySQL의 [[https://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_date-add][내장 날짜와 시간 함수]]를 활용해서 다음의 값들을 함수적으로
-얻어냅니다. 
+얻어냅니다.
 
 - DAYOFMONTH : 해당 문자열에서 '일'에 해당하는 숫자. 잘못된 날짜인 경우 NULL을
   반환합니다. (ex: 2015-07-33)
@@ -186,14 +186,14 @@
 - WEEKOFYEAR : 해당 문자열의 '주차'에 해당하는 숫자입니다. '주차' 계념은
   생각보다 복잡합니다. 조금 뒤에서 다룹니다.
 - lpad : 달력에 표시할 문자열로 단순하게 DAYOFMONTH 값이 한자리 인 경우 보기
-  좋게 앞에 0을 붙여준 형식입니다. 
+  좋게 앞에 0을 붙여준 형식입니다.
 
 여기서 처음으로 where 절 조건으로 dom(day of month)가 NULL 이 아닌 값을
 걸러줍니다. 이는 각 월마다 유동적인 숫자의 날짜가 존재할 수 있기때문에 앞서
 살펴본 동적 쿼리를 통해 넉넉한 수의 '일'을 생성한 뒤 MySQL 내장함수를 통해 그
 날짜가 잘못되었는지 여부를 판단한 방법입니다.
 
-여기까지 진행된 결과는 아래와 같습니다. 
+여기까지 진행된 결과는 아래와 같습니다.
 
 |-------------+-----+-----+-----+-------|
 | date_string | dom | dow | woy | dom_f |
@@ -282,7 +282,7 @@ Wikipedia의 [[https://en.wikipedia.org/wiki/Week][Week 페이지]] 의 'Week nu
 여기까지 진행되면 사실상 다 되었습니다. 위 결과를 달력형식으로 보여주는것은 열
 형태로 표현된 자료(narrow, stacked, tall skinny)를 고정된 컬럼 형태로 표현된
 자료(wide, unstacked, short fat) 형태로 표현하는 [[https://en.wikipedia.org/wiki/Wide_and_narrow_data][변환작업]] 입니다.
- 
+
 역시 MySQL은 이 작업을 위한 [[http://www.postgresql.org/docs/9.2/static/tablefunc.html][우아한 방법]] 을 [[http://stackoverflow.com/questions/14084503/postgresql-convert-columns-to-rows-transpose][제공하지않기 떄문에]] 일반적으로
 사용하는 GROUP BY와 CASE WHEN 을 사용한 구문을 이용해서 [[http://stackoverflow.com/questions/2099198/sql-transpose-rows-as-columns][문제를 해결합니다]].
 이 기법은 GROUP BY를 사용한 뒤 집합(Aggregate)함수 내부의 CASE WHEN 문을
