@@ -1,0 +1,300 @@
+#+TITLE:	MySQL 쿼리로 인자화된 달력 표현하기
+#+AUTHOR:	유용빈
+#+EMAIL:	yongbin.yu@gmail.com
+#+DATE:		2015-07-15
+#+STARTUP:	content
+
+* 1. What's this?
+
+국산 오픈소스 멀티플랫폼 DB 클라이언트 [[https://sites.google.com/site/tadpolefordb/][올챙이]] 에서 진행한 [[https://tadpoledbhub.atlassian.net/wiki/pages/viewpage.action?pageId=19496984&focusedCommentId=19890179][이벤트]] 에서 제출한
+문제의 풀이입니다. 흥미로운 문제이기도 하고, 평소에 자주 사용하는 방법들이 많이
+사용되었으며 진행하면서 배운것들이 많기때문에 개인적인 기록차원에서 정리합니다.
+
+* 2. 문제
+
+특정 년월의 달력을 표시하세요. 아래는 2015년 7월을 표시한 예시입니다.  입력을
+201507 을 했을 경우 아래와 같이 나옵니다. 문제를 내신 부자형님은 MySQL로 순수한
+쿼리로만 답을 내었다고합니다. (create table, insert into  문이 없습니다)
+
+|------+----+----+----+----+----+----+----|
+| week | 일 | 월 | 화 | 수 | 목 | 금 | 토 |
+|------+----+----+----+----+----+----+----|
+|   26 |    |    |    |  1 |  2 |  3 |  4 |
+|   27 |  5 |  6 |  7 |  8 |  9 | 10 | 11 |
+|   28 | 12 | 13 | 14 | 15 | 16 | 17 | 18 |
+|   29 | 19 | 20 | 21 | 22 | 23 | 24 | 25 |
+|   30 | 26 | 27 | 28 | 29 | 30 | 31 |    |
+|------+----+----+----+----+----+----+----|
+
+* 3. 제출한 답
+
+#+BEGIN_SRC sql
+  SELECT
+          woy                                                     AS 'week'
+          ,MAX(CASE WHEN `dow` = '2' THEN `dom_f` END)            AS 'Mo'
+          ,MAX(CASE WHEN `dow` = '3' THEN `dom_f` END)            AS 'Tu'
+          ,MAX(CASE WHEN `dow` = '4' THEN `dom_f` END)            AS 'We'
+          ,MAX(CASE WHEN `dow` = '5' THEN `dom_f` END)            AS 'Th'
+          ,MAX(CASE WHEN `dow` = '6' THEN `dom_f` END)            AS 'Fr'
+          ,MAX(CASE WHEN `dow` = '7' THEN `dom_f` END)            AS 'Sa'
+          ,MAX(CASE WHEN `dow` = '1' THEN `dom_f` END)            AS 'Su'
+  FROM
+  (
+      SELECT
+              *
+      FROM
+      (
+          SELECT
+                  `date_string`
+                  ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
+                  ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
+                  ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
+                  ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+          FROM
+          (
+              SELECT      concat(?,'-',n) as date_string                  -- parameterize
+              FROM
+              (
+                  SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
+                  UNION SELECT '2'  UNION SELECT '3'  UNION SELECT '4'  UNION SELECT '5'
+                  UNION SELECT '6'  UNION SELECT '7'  UNION SELECT '8'  UNION SELECT '9'  UNION SELECT '10'
+                  UNION SELECT '11' UNION SELECT '12' UNION SELECT '13' UNION SELECT '14' UNION SELECT '15'
+                  UNION SELECT '16' UNION SELECT '17' UNION SELECT '18' UNION SELECT '19' UNION SELECT '20'
+                  UNION SELECT '21' UNION SELECT '22' UNION SELECT '23' UNION SELECT '24' UNION SELECT '25'
+                  UNION SELECT '26' UNION SELECT '27' UNION SELECT '28' UNION SELECT '29' UNION SELECT '30'
+                  UNION SELECT '31' UNION SELECT '32' UNION SELECT '33' UNION SELECT '34' UNION SELECT '35'
+              ) AS a
+          ) AS b
+      ) AS c
+      WHERE
+          `dom` IS NOT NULL
+  ) AS d
+  GROUP BY `woy`
+#+END_SRC
+
+* 4. 실행하는 방법
+
+#+BEGIN_SRC sh
+  cat query.sql | sed s/\?/\'2011-07\'/ | mysql
+#+END_SRC
+
+|------+------+------+----+----+----+------+------|
+| week |   Mo |   Tu | We | Th | Fr |   Sa |   Su |
+|------+------+------+----+----+----+------+------|
+|   27 | NULL | NULL | 01 | 02 | 03 |   04 |   05 |
+|   28 |   06 |   07 | 08 | 09 | 10 |   11 |   12 |
+|   29 |   13 |   14 | 15 | 16 | 17 |   18 |   19 |
+|   30 |   20 |   21 | 22 | 23 | 24 |   25 |   26 |
+|   31 |   27 |   28 | 29 | 30 | 31 | NULL | NULL |
+|------+------+------+----+----+----+------+------|
+
+* 5. 풀이
+
+제출한 SQL에서 최종 결과를 만들어내는 과정을 순서대로 훓어보도록 하겠습니다. 
+
+** 5.1 동적 테이블이 생성
+
+달력에서 모든 달은 적게는 28일에서 31일까지의 일을 갖습니다. 우리는 이 숫자들을
+가지고 달력을 만들어야 하기 때문에 필연적으로 1부터 28~31 까지의 숫자가
+필요합니다.
+
+각 월마다 가지는 일의 숫자가 다르다는 점은 차처하더라도, MySQL은 1부터 n개의
+숫자를 가지는 '임의의 테이블'을 동적으로 만들수 있는 [[http://www.postgresql.org/docs/9.1/static/functions-srf.html][우아한 방법이]] 없습니다. 
+
+따라서 1부터 35 까지의 숫자를 생성하는 일반적인 방법은 보통 다음 [[http://stackoverflow.com/questions/304461/generate-an-integer-sequence-in-mysql][두가지]]가
+있습니다.
+
+-  로컬 변수를 이용하는 방법
+   #+BEGIN_SRC sql
+     SELECT  @rownum:=@rownum+1 AS n
+     FROM    `mysql`.`help_relation` JOIN (SELECT @rownum:=0) r
+     WHERE   @rownum< 35
+   #+END_SRC
+- UNION을 이용하는 방법
+  #+BEGIN_SRC sql
+    SELECT '1' AS n
+    UNION SELECT '2'  UNION SELECT '3'  UNION SELECT '4'  UNION SELECT '5'
+    UNION SELECT '6'  UNION SELECT '7'  UNION SELECT '8'  UNION SELECT '9'  UNION SELECT '10'
+    UNION SELECT '11' UNION SELECT '12' UNION SELECT '13' UNION SELECT '14' UNION SELECT '15'
+    UNION SELECT '16' UNION SELECT '17' UNION SELECT '18' UNION SELECT '19' UNION SELECT '20'
+    UNION SELECT '21' UNION SELECT '22' UNION SELECT '23' UNION SELECT '24' UNION SELECT '25'
+    UNION SELECT '26' UNION SELECT '27' UNION SELECT '28' UNION SELECT '29' UNION SELECT '30'
+    UNION SELECT '31' UNION SELECT '32' UNION SELECT '33' UNION SELECT '34' UNION SELECT '35'
+  #+END_SRC
+
+첫번째 방법은 생성하고자 하는 숫자보다 큰 테이블이 존재해야하기때문에 어쩔수
+없이 외부적인 의존성이 생깁니다. 따라서 좀 길긴 하지만, 좀 더 안전한 방법인
+후자의 방법을 선택합니다.
+
+(생성해야 되는 수가 큰 경우 아래와 같이 Cartesian Product를 활용해서 창의적으로
+만드는 [[http://dba.stackexchange.com/questions/75785/how-to-generate-a-sequence-in-mysql][방법]]도 있습니다)
+
+#+BEGIN_SRC sql
+  select (h*100+t*10+u+1) x from
+  (select 0 h union select 1 union select 2 union select 3 union select 4 union
+  select 5 union select 6 union select 7 union select 8 union select 9) A,
+  (select 0 t union select 1 union select 2 union select 3 union select 4 union
+  select 5 union select 6 union select 7 union select 8 union select 9) B,
+  (select 0 u union select 1 union select 2 union select 3 union select 4 union
+  select 5 union select 6 union select 7 union select 8 union select 9) C
+  order by x;
+#+END_SRC
+
+** 5.2 MySQL 내장 함수를 이용한 2차 자료 생성
+#+BEGIN_SRC sql
+      SELECT
+              *
+      FROM
+      (
+          SELECT
+                  `date_string`
+                  ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
+                  ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
+                  ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
+                  ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+          FROM
+          (
+              SELECT      concat(?,'-',n) as date_string                  -- parameterize
+              FROM
+              (
+                  SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
+                  UNION SELECT '2'  UNION SELECT '3'  UNION SELECT '4'  UNION SELECT '5'
+                  UNION SELECT '6'  UNION SELECT '7'  UNION SELECT '8'  UNION SELECT '9'  UNION SELECT '10'
+                  UNION SELECT '11' UNION SELECT '12' UNION SELECT '13' UNION SELECT '14' UNION SELECT '15'
+                  UNION SELECT '16' UNION SELECT '17' UNION SELECT '18' UNION SELECT '19' UNION SELECT '20'
+                  UNION SELECT '21' UNION SELECT '22' UNION SELECT '23' UNION SELECT '24' UNION SELECT '25'
+                  UNION SELECT '26' UNION SELECT '27' UNION SELECT '28' UNION SELECT '29' UNION SELECT '30'
+                  UNION SELECT '31' UNION SELECT '32' UNION SELECT '33' UNION SELECT '34' UNION SELECT '35'
+              ) AS a
+          ) AS b
+      ) AS c
+      WHERE
+          `dom` IS NOT NULL
+#+END_SRC
+
+이렇게 생성한 동적 테이블은 MySQL의 concat 내장함수를 이용해서 우리가 만들고자
+하는 날짜형식으로 변환합니다. 즉 인자가 '2015-07'일때 1 부터 35 숫자는
+'2015-07-1' 부터 '2015-07-35'로 변환됩니다.
+
+그리고 MySQL의 [[https://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_date-add][내장 날짜와 시간 함수]]를 활용해서 다음의 값들을 함수적으로
+얻어냅니다. 
+
+- DAYOFMONTH : 해당 문자열에서 '일'에 해당하는 숫자. 잘못된 날짜인 경우 NULL을
+  반환합니다. (ex: 2015-07-33)
+- DAYOFWEEK : 해당 문자열의 '요일'에 해당하는 색인 숫자. 1~7 이 '일요일' 부터
+  '토요일'에 매칭됩니다.
+- WEEKOFYEAR : 해당 문자열의 '주차'에 해당하는 숫자입니다. '주차' 계념은
+  생각보다 복잡합니다. 조금 뒤에서 다룹니다.
+- lpad : 달력에 표시할 문자열로 단순하게 DAYOFMONTH 값이 한자리 인 경우 보기
+  좋게 앞에 0을 붙여준 형식입니다. 
+
+여기서 처음으로 where 절 조건으로 dom(day of month)가 NULL 이 아닌 값을
+걸러줍니다. 이는 각 월마다 유동적인 숫자의 날짜가 존재할 수 있기때문에 앞서
+살펴본 동적 쿼리를 통해 넉넉한 수의 '일'을 생성한 뒤 MySQL 내장함수를 통해 그
+날짜가 잘못되었는지 여부를 판단한 방법입니다.
+
+여기까지 진행된 결과는 아래와 같습니다. 
+
+|-------------+-----+-----+-----+-------|
+| date_string | dom | dow | woy | dom_f |
+|-------------+-----+-----+-----+-------|
+|   2015-07-1 |   1 |   4 |  27 |    01 |
+|   2015-07-2 |   2 |   5 |  27 |    02 |
+|   2015-07-3 |   3 |   6 |  27 |    03 |
+|   2015-07-4 |   4 |   7 |  27 |    04 |
+|   2015-07-5 |   5 |   1 |  27 |    05 |
+|   2015-07-6 |   6 |   2 |  28 |    06 |
+|   2015-07-7 |   7 |   3 |  28 |    07 |
+|   2015-07-8 |   8 |   4 |  28 |    08 |
+|   2015-07-9 |   9 |   5 |  28 |    09 |
+|  2015-07-10 |  10 |   6 |  28 |    10 |
+|  2015-07-11 |  11 |   7 |  28 |    11 |
+|  2015-07-12 |  12 |   1 |  28 |    12 |
+|  2015-07-13 |  13 |   2 |  29 |    13 |
+|  2015-07-14 |  14 |   3 |  29 |    14 |
+|  2015-07-15 |  15 |   4 |  29 |    15 |
+|  2015-07-16 |  16 |   5 |  29 |    16 |
+|  2015-07-17 |  17 |   6 |  29 |    17 |
+|  2015-07-18 |  18 |   7 |  29 |    18 |
+|  2015-07-19 |  19 |   1 |  29 |    19 |
+|  2015-07-20 |  20 |   2 |  30 |    20 |
+|  2015-07-21 |  21 |   3 |  30 |    21 |
+|  2015-07-22 |  22 |   4 |  30 |    22 |
+|  2015-07-23 |  23 |   5 |  30 |    23 |
+|  2015-07-24 |  24 |   6 |  30 |    24 |
+|  2015-07-25 |  25 |   7 |  30 |    25 |
+|  2015-07-26 |  26 |   1 |  30 |    26 |
+|  2015-07-27 |  27 |   2 |  31 |    27 |
+|  2015-07-28 |  28 |   3 |  31 |    28 |
+|  2015-07-29 |  29 |   4 |  31 |    29 |
+|  2015-07-30 |  30 |   5 |  31 |    30 |
+|  2015-07-31 |  31 |   6 |  31 |    31 |
+|-------------+-----+-----+-----+-------|
+
+제가 원하던 결과가 나왔다고 생각하던 찰라에 출제한 예시의 결과에서 2015년 7월
+1일이 2015년의 26주라고 표현되고 있었던 반면, 제 결과에는 27주라고 표현된것을
+확인했습니다. 문제를 풀던 당시에는 제가 생성한 결과는 MySQL 내장함수
+WEEKOFYEAR를 활용한 결과이고, 실제 달력을 보면서 주차를 세어보았을때도 7월의
+첫째주는 27주가 맞기때문에 출제하신분의 단순한 실수라고 생각하고 넘어갔었습니다.
+
+하지만 이 문제를 좀 더 깊에 확인해본 결과 이 이슈는 출제하신 분의 실수가 아니라,
+년에서 주차를 표현하는 방식에 대한 방법에 차이에 기인한 이슈임을 알게되었습니다.
+Wikipedia의 [[https://en.wikipedia.org/wiki/Week][Week 페이지]] 의 'Week numbering' 섹션을 보면 이 이슈가 자세하게
+설명되어있습니다. 대표적으로 ISO8601에서 사용하는 방식과 북미에서 사용하는
+방식이 존재합니다. 차이점은 다음과 같습니다.
+
+- ISO8601
+  - EU와 대부분의 유럽국가에서 사용
+  - 각각의 주는 '월요일' 부터 시작함
+  - 새해의 첫번째 '목요일'을 새해의 첫 주로 계산함
+  - 따라서 새해의 첫주는 최소 4일부터 최대 7일이 될 수 있음
+  - 1년은 1주부터 53주로 구성됨
+  - 새해의 첫주는 작년 마지막주의 일부가 될 수 없음.
+- 북미방식
+  - Canada, USA, China, Japan, Israel, most of Latin America 에서 사용
+  - 각각의 주는 '일요일' 부터 시작함
+  - 새해의 첫번째 '토요일'을 새해의 첫 주로 계산함
+  - 1년은 0주부터 53주로 구성됨
+  - 새해의 첫주는 작년 마지막주의 일부가 될 수 있음.(0주)
+
+이 두 방식은 MySQL의 내장 환경변수인 [[https://dev.mysql.com/doc/refman/5.5/en/server-system-variables.html#sysvar_default_week_format][default_week_format]] 에 영향을 받으며,
+내장함수인 [[https://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_week][WEEK]] 는 위 변수를 mode 인자로 받아 적절하게 지역로케일에 맞는
+날짜형식을 표현합니다. 즉 제가 작업한 환경은 ISO8601 방식의 달력이며, 출제하신
+분께서 작업하신 달력은 북미방식의 달력입니다.
+
+** 5.3 Column Row Transformation
+
+#+BEGIN_SRC sql
+  SELECT
+          woy                                                     AS 'week'
+          ,MAX(CASE WHEN `dow` = '2' THEN `dom_f` END)            AS 'Mo'
+          ,MAX(CASE WHEN `dow` = '3' THEN `dom_f` END)            AS 'Tu'
+          ,MAX(CASE WHEN `dow` = '4' THEN `dom_f` END)            AS 'We'
+          ,MAX(CASE WHEN `dow` = '5' THEN `dom_f` END)            AS 'Th'
+          ,MAX(CASE WHEN `dow` = '6' THEN `dom_f` END)            AS 'Fr'
+          ,MAX(CASE WHEN `dow` = '7' THEN `dom_f` END)            AS 'Sa'
+          ,MAX(CASE WHEN `dow` = '1' THEN `dom_f` END)            AS 'Su'
+  FROM `sometable`
+  GROUP BY `woy`
+
+#+END_SRC
+
+여기까지 진행되면 사실상 다 되었습니다. 위 결과를 달력형식으로 보여주는것은 열
+형태로 표현된 자료(narrow, stacked, tall skinny)를 고정된 컬럼 형태로 표현된
+자료(wide, unstacked, short fat) 형태로 표현하는 [[https://en.wikipedia.org/wiki/Wide_and_narrow_data][변환작업]] 입니다.
+ 
+역시 MySQL은 이 작업을 위한 [[http://www.postgresql.org/docs/9.2/static/tablefunc.html][우아한 방법]] 을 [[http://stackoverflow.com/questions/14084503/postgresql-convert-columns-to-rows-transpose][제공하지않기 떄문에]] 일반적으로
+사용하는 GROUP BY와 CASE WHEN 을 사용한 구문을 이용해서 [[http://stackoverflow.com/questions/2099198/sql-transpose-rows-as-columns][문제를 해결합니다]].
+이 기법은 GROUP BY를 사용한 뒤 집합(Aggregate)함수 내부의 CASE WHEN 문을
+조건분기처럼 사용할수 있는 기법을 이용한 방법으로, MySQL에서 row 형태로 표현된
+자료를 column 형태로 pivot 변환할때 자주 사용하는 기법입니다.
+
+* 마치며
+
+개인적으로 MySQL 환경에서 복잡한 SQL문을 작성할일이 자주 있는데, 그때마다 Stack
+Overflow를 검색해서 사용하던 기법들을 올챙이 이벤트를 통해 깔끔하게 정리할수
+있었고 정확하게 모르고 있던 ISO8601 표준에 대해서 알게된 뜻깊은 이벤트였습니다.
+비슷한 고민을 하는 다른분들에게도 힌트가 되었으면 좋겠습니다.
+
+정리한 내용중 잘못된 내용이나 궁금한점, 혹은 더 나은 조언은 이슈를 통해 등록해
+주시기 바랍니다.
