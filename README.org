@@ -1,8 +1,8 @@
-#+TITLE:	MySQL 쿼리로 인자화된 달력 표현하기
-#+AUTHOR:	유용빈
-#+EMAIL:	yongbin.yu@gmail.com
-#+DATE:		2015-07-15
-#+STARTUP:	content
+#+TITLE:        MySQL 쿼리로 인자화된 달력 표현하기
+#+AUTHOR:       유용빈
+#+EMAIL:        yongbin.yu@gmail.com
+#+DATE:         2015-07-15
+#+STARTUP:      content
 #+LATEX_CMD: ;txelatex
 #+LaTeX_HEADER: \usepackage{kotex}
 #+LaTeX_HEADER: \usepackage{a4wide}
@@ -116,13 +116,13 @@
    있습니다.
 
    - 로컬 변수를 이용하는 방법
-	 #+BEGIN_SRC sql
+     #+BEGIN_SRC sql
        SELECT  @rownum:=@rownum+1 AS n
        FROM    `mysql`.`help_relation` JOIN (SELECT @rownum:=0) r
        WHERE   @rownum< 35
-	 #+END_SRC
+     #+END_SRC
    - UNION을 이용하는 방법
-	 #+BEGIN_SRC sql
+     #+BEGIN_SRC sql
        SELECT '1' AS n
        UNION SELECT '2'  UNION SELECT '3'  UNION SELECT '4'  UNION SELECT '5'
        UNION SELECT '6'  UNION SELECT '7'  UNION SELECT '8'  UNION SELECT '9'  UNION SELECT '10'
@@ -131,7 +131,7 @@
        UNION SELECT '21' UNION SELECT '22' UNION SELECT '23' UNION SELECT '24' UNION SELECT '25'
        UNION SELECT '26' UNION SELECT '27' UNION SELECT '28' UNION SELECT '29' UNION SELECT '30'
        UNION SELECT '31' UNION SELECT '32' UNION SELECT '33' UNION SELECT '34' UNION SELECT '35'
-	 #+END_SRC
+     #+END_SRC
 
    첫번째 방법은 생성하고자 하는 숫자보다 큰 테이블이 존재해야하기때문에 어쩔수
    없이 외부적인 의존성이 생깁니다. 따라서 좀 길긴 하지만, 좀 더 안전한 방법인
@@ -257,18 +257,18 @@
    차이점은 다음과 같습니다.
 
    * ISO8601
-	 - EU와 대부분의 유럽국가에서 사용
-	 - 각각의 주는 '월요일' 부터 시작함
-	 - 새해의 첫번째 '목요일'을 새해의 첫 주로 계산함
-	 - 따라서 새해의 첫주는 최소 4일부터 최대 7일이 될 수 있음
-	 - 1년은 1주부터 53주로 구성됨
-	 - 새해의 첫주는 작년 마지막주의 일부가 될 수 없음
+     - EU와 대부분의 유럽국가에서 사용
+     - 각각의 주는 '월요일' 부터 시작함
+     - 새해의 첫번째 '목요일'을 새해의 첫 주로 계산함
+     - 따라서 새해의 첫주는 최소 4일부터 최대 7일이 될 수 있음
+     - 1년은 1주부터 53주로 구성됨
+     - 새해의 첫주는 작년 마지막주의 일부가 될 수 없음
    * 북미방식
-	 - Canada, USA, China, Japan, Israel, most of Latin America 에서 사용
-	 - 각각의 주는 '일요일' 부터 시작함
-	 - 새해의 첫번째 '토요일'을 새해의 첫 주로 계산함
-	 - 1년은 0주부터 53주로 구성됨
-	 - 새해의 첫주는 작년 마지막주의 일부가 될 수 있음(0주)
+     - Canada, USA, China, Japan, Israel, most of Latin America 에서 사용
+     - 각각의 주는 '일요일' 부터 시작함
+     - 새해의 첫번째 '토요일'을 새해의 첫 주로 계산함
+     - 1년은 0주부터 53주로 구성됨
+     - 새해의 첫주는 작년 마지막주의 일부가 될 수 있음(0주)
 
   이 두 방식은 MySQL의 내장 환경변수인 [[https://dev.mysql.com/doc/refman/5.5/en/server-system-variables.html#sysvar_default_week_format][default_week_format]] 에 영향을 받으며,
   내장함수인 [[https://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_week][WEEK]] 는 위 변수를 mode 인자로 받아 적절하게 지역로케일에 맞는
