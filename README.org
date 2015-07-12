@@ -256,19 +256,19 @@
    사용하는 ISO8601 방식과 북미에서 주로 사용하는 방식이 존재합니다. 각각의
    차이점은 다음과 같습니다.
 
-  - ISO8601
-	- EU와 대부분의 유럽국가에서 사용
-	- 각각의 주는 '월요일' 부터 시작함
-	- 새해의 첫번째 '목요일'을 새해의 첫 주로 계산함
-	- 따라서 새해의 첫주는 최소 4일부터 최대 7일이 될 수 있음
-	- 1년은 1주부터 53주로 구성됨
-	- 새해의 첫주는 작년 마지막주의 일부가 될 수 없음.
-  - 북미방식
-	- Canada, USA, China, Japan, Israel, most of Latin America 에서 사용
-	- 각각의 주는 '일요일' 부터 시작함
-	- 새해의 첫번째 '토요일'을 새해의 첫 주로 계산함
-	- 1년은 0주부터 53주로 구성됨
-	- 새해의 첫주는 작년 마지막주의 일부가 될 수 있음.(0주)
+   * ISO8601
+	 - EU와 대부분의 유럽국가에서 사용
+	 - 각각의 주는 '월요일' 부터 시작함
+	 - 새해의 첫번째 '목요일'을 새해의 첫 주로 계산함
+	 - 따라서 새해의 첫주는 최소 4일부터 최대 7일이 될 수 있음
+	 - 1년은 1주부터 53주로 구성됨
+	 - 새해의 첫주는 작년 마지막주의 일부가 될 수 없음
+   * 북미방식
+	 - Canada, USA, China, Japan, Israel, most of Latin America 에서 사용
+	 - 각각의 주는 '일요일' 부터 시작함
+	 - 새해의 첫번째 '토요일'을 새해의 첫 주로 계산함
+	 - 1년은 0주부터 53주로 구성됨
+	 - 새해의 첫주는 작년 마지막주의 일부가 될 수 있음(0주)
 
   이 두 방식은 MySQL의 내장 환경변수인 [[https://dev.mysql.com/doc/refman/5.5/en/server-system-variables.html#sysvar_default_week_format][default_week_format]] 에 영향을 받으며,
   내장함수인 [[https://dev.mysql.com/doc/refman/5.5/en/date-and-time-functions.html#function_week][WEEK]] 는 위 변수를 mode 인자로 받아 적절하게 지역로케일에 맞는
