@@ -3,14 +3,23 @@
 #+EMAIL:	yongbin.yu@gmail.com
 #+DATE:		2015-07-15
 #+STARTUP:	content
+#+LATEX_CMD: ;txelatex
+#+LaTeX_HEADER: \usepackage{kotex}
+#+LaTeX_HEADER: \usepackage{a4wide}
+#+LaTeX_HEADER: \usepackage[unicode,dvipdfm]{hyperref}
+#+LaTeX_HEADER: \SetHangulFonts{utbt}{utgt}{utgt}
+#+LaTeX: \makeatletter
+#+LaTeX: \renewcommand\verbatim@font{\small\normalfont\ttfamily}
+#+LaTeX: \makeatother
+#+OPTIONS: num:t toc:nil ^:nil
 
-* 1. What's this?
+* What's this?
 
   국산 오픈소스 멀티플랫폼 DB 클라이언트 [[https://sites.google.com/site/tadpolefordb/][올챙이]] 에서 진행한 [[https://tadpoledbhub.atlassian.net/wiki/pages/viewpage.action?pageId=19496984&focusedCommentId=19890179][이벤트]] 에서 제출한
   문제의 풀이입니다. 흥미로운 문제이기도 하고, 평소에 자주 사용하는 방법들이 많이
   사용되었으며 진행하면서 배운것들이 많기때문에 기록차원에서 정리합니다.
 
-* 2. 문제
+* 문제
 
   #+BEGIN_QUOTE
   특정 년월의 달력을 표시하세요. 아래는 2015년 7월을 표시한 예시입니다.  입력을
@@ -28,7 +37,7 @@
   |------+----+----+----+----+----+----+----|
   #+END_QUOTE
 
-* 3. 제출한 답
+* 제출한 답
 
   #+BEGIN_SRC sql
     SELECT
@@ -74,7 +83,7 @@
     GROUP BY `woy`
   #+END_SRC
 
-* 4. 결과
+* 결과
 
   #+BEGIN_SRC sh
     cat query.sql | sed s/\?/\'2011-07\'/ | mysql
@@ -90,11 +99,11 @@
   |   31 |   27 |   28 | 29 | 30 | 31 | NULL | NULL |
   |------+------+------+----+----+----+------+------|
 
-* 5. 풀이
+* 풀이
 
   결과를 만들어내는 과정을 순서대로 살펴보겠습니다.
 
-** 5.1 동적 테이블이 생성
+** 동적 테이블이 생성
 
    달력에서 모든 달은 적게는 28일에서 31일까지의 일을 갖습니다. 우리는 이 숫자들을
    가지고 달력을 만들어야 하기 때문에 필연적으로 1부터 28~31 까지의 숫자가
@@ -142,7 +151,7 @@
      order by x;
    #+END_SRC
 
-** 5.2 MySQL 내장 함수를 이용한 2차 자료 생성
+** MySQL 내장 함수를 이용한 2차 자료 생성
 
    #+BEGIN_SRC sql
      SELECT
@@ -266,7 +275,7 @@
   날짜형식을 표현합니다. 즉 제가 작업한 환경은 ISO8601 방식의 달력이며, 출제하신
   분께서 작업하신 달력은 북미방식의 달력임을 알 수 있습니다.
 
-** 5.3 Column Row Transformation
+** Column Row Transformation
 
    #+BEGIN_SRC sql
          SELECT
