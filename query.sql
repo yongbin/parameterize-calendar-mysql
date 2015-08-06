@@ -18,10 +18,10 @@ FROM
                 ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
                 ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
                 ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
-                ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+                ,LPAD(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
         FROM
         (
-            SELECT      concat(?,'-',n) as date_string                  -- parameterize
+            SELECT      CONCAT(?,'-',n) AS date_string                  -- parameterize
             FROM
             (
                 SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
