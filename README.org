@@ -185,7 +185,7 @@
          `dom` IS NOT NULL
    #+END_SRC
 
-   먼저 위에서 생성한 동적 테이블을 concat 내장함수를 이용해서 우리가 만들고자
+   먼저 위에서 생성한 동적 테이블을 CONCAT 내장함수를 이용해서 우리가 만들고자
    하는 날짜형식으로 문자열로 변환합니다. 즉 만들고자 하는 달력이 2015년 7월이고
    사용자로 부터 받은 요청이 '2015-07'이라면 위에서 만든 1부터 35까지의 숫자는
    '2015-07-1' 부터 '2015-07-35' 문자열로 치환되는 방식입니다.
@@ -199,7 +199,7 @@
    - WEEKOFYEAR : 해당 문자열의 '주차'에 해당하는 숫자를 구합니다. ('주차' 개념은
      생각보다 복잡합니다. 조금 뒤에서 다룹니다.) // woy
    - LPAD : 달력에 표시할 '일'에 해당하는 문자열이 한자리인 경우 왼쪽에 0으로
-     자리체움을(Left padding)한 문자열을 구합니다. // dom_f
+     자리체움을(left padding)한 문자열을 구합니다. // dom_f
 
    이때 WHERE 절 조건으로 dom(day of month)가 NULL 인 값을 걸러줍니다.
    각 월마다 유동적인 숫자의 날짜가 존재할 수 있기때문에 앞서 살펴본 동적 쿼리를
@@ -324,15 +324,15 @@
      GROUP BY `woy`
    #+END_SRC
 
-   지금까지 진행한 결과를  달력형식으로 보여주는것은 행(Row) 형태로 표현된
-   자료(narrow, stacked, tall skinny)를 고정된 열(Column) 형태로 표현된
+   지금까지 진행한 결과를  달력형식으로 보여주는것은 행(row) 형태로 표현된
+   자료(narrow, stacked, tall skinny)를 고정된 열(column) 형태로 표현된
    자료(wide, unstacked, short fat) 형태로 표현하는 [[https://en.wikipedia.org/wiki/Wide_and_narrow_data][변환작업]] 입니다.
 
    역시 MySQL은 이 작업을 위한 [[http://www.postgresql.org/docs/9.2/static/tablefunc.html][우아한 방법]] 을 [[http://stackoverflow.com/questions/14084503/postgresql-convert-columns-to-rows-transpose][제공하지않기 떄문에]] 일반적으로
    사용하는 GROUP BY와 CASE WHEN 을 사용하는 방식으로 [[http://stackoverflow.com/questions/2099198/sql-transpose-rows-as-columns][문제를 해결합니다]]. 이
-   기법은 GROUP BY를 사용한 뒤 집합(Aggregate)함수 내부에서 CASE WHEN 문을
+   기법은 GROUP BY를 사용한 뒤 집합(aggregate)함수 내부에서 CASE WHEN 문을
    조건분기처럼 사용할수 있는 특성을 이용한 방법으로, MySQL에서 행형태로 표현된
-   자료를 열형태로 변환(Pivot) 할때 자주 사용하는 방법입니다.
+   자료를 열형태로 변환(pivot) 할때 자주 사용하는 방법입니다.
 
    이 방법을 통해서 각각의 행의 dow 값에 따라 적절한 dom_f 값을 지정한 '요일'을
    나타내는 열에 나타내서 최종적으로 달력과 같은 모양을 만들어 낼 수 잇습니다.
