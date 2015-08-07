@@ -60,10 +60,10 @@
                     ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
                     ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
                     ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
-                    ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+                    ,LPAD(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
             FROM
             (
-                SELECT      concat(?,'-',n) as date_string                  -- parameterize
+                SELECT      CONCAT(?,'-',n) AS date_string                  -- parameterize
                 FROM
                 (
                     SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
@@ -121,9 +121,9 @@
 
    - 로컬 변수를 이용하는 방법
      #+BEGIN_SRC sql
-       SELECT  @rownum:=@rownum+1 AS n
+       SELECT  @rownum := @rownum + 1 AS n
        FROM    `mysql`.`help_relation` JOIN (SELECT @rownum:=0) r
-       WHERE   @rownum< 35
+       WHERE   @rownum < 35
      #+END_SRC
    - UNION을 이용하는 방법
      #+BEGIN_SRC sql
@@ -141,10 +141,10 @@
    많은 테이블이 필요하기 때문에 외부 테이블에 대한 의존성이 생깁니다. 따라서 좀
    내용이 길긴 하지만 방어적으로 외부의존성이 없는 UNION을 이용하는 방법을
    선택해서 임의의 테이블을 생성했습니다. (만약 생성해야 되는 수가 큰 경우 아래와
-   같이 Cartesian Product를 활용해서 테이블을 만드는 창의적인 [[http://dba.stackexchange.com/questions/75785/how-to-generate-a-sequence-in-mysql][방법]]도 있습니다)
+   같이 카티전 곱(cartesian product)을 활용해서 테이블을 만드는 창의적인 [[http://dba.stackexchange.com/questions/75785/how-to-generate-a-sequence-in-mysql][방법]]도 있습니다)
 
    #+BEGIN_SRC sql
-     SELECT ( H*100 + T*10 + U + 1) X
+     SELECT ( H * 100 + T * 10 + U + 1) X
      FROM
          (SELECT 0 H UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
          (SELECT 0 T UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) b,
@@ -164,10 +164,10 @@
                  ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
                  ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
                  ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
-                 ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+                 ,LPAD(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
          FROM
          (
-             SELECT      concat('2015-07','-',n) as date_string                  -- parameterize
+             SELECT      CONCAT('2015-07','-',n) AS date_string                  -- parameterize
              FROM
              (
                  SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
@@ -185,7 +185,7 @@
          `dom` IS NOT NULL
    #+END_SRC
 
-   먼저 위에서 생성한 동적 테이블을 concat 내장함수를 이용해서 우리가 만들고자
+   먼저 위에서 생성한 동적 테이블을 CONCAT 내장함수를 이용해서 우리가 만들고자
    하는 날짜형식으로 문자열로 변환합니다. 즉 만들고자 하는 달력이 2015년 7월이고
    사용자로 부터 받은 요청이 '2015-07'이라면 위에서 만든 1부터 35까지의 숫자는
    '2015-07-1' 부터 '2015-07-35' 문자열로 치환되는 방식입니다.
@@ -194,12 +194,12 @@
 
    - DAYOFMONTH : 해당 문자열에서 '일'에 해당하는 숫자를 구합니다. 잘못된 날짜인
      경우 NULL을 반환합니다. (ex: 2015-07-33) // dom
-   - DAYOFWEEK : 해당 문자열의 '요일'에 해당하는 색인 숫자를 구합니다. . 1~7 이
-     '일요일' 부터 '토요일'에 매칭됩니다. // dow
+   - DAYOFWEEK : 해당 문자열의 '요일'에 해당하는 색인 숫자를 구합니다. 1부터
+     7까지의 숫자가 '일요일' 부터 '토요일'에 매칭됩니다. // dow
    - WEEKOFYEAR : 해당 문자열의 '주차'에 해당하는 숫자를 구합니다. ('주차' 개념은
      생각보다 복잡합니다. 조금 뒤에서 다룹니다.) // woy
    - LPAD : 달력에 표시할 '일'에 해당하는 문자열이 한자리인 경우 왼쪽에 0으로
-     자리체움을(Left padding)한 문자열을 구합니다. // dom_f
+     자리체움을(left padding)한 문자열을 구합니다. // dom_f
 
    이때 WHERE 절 조건으로 dom(day of month)가 NULL 인 값을 걸러줍니다.
    각 월마다 유동적인 숫자의 날짜가 존재할 수 있기때문에 앞서 살펴본 동적 쿼리를
@@ -253,7 +253,7 @@
 
    하지만 이 문제를 좀 더 확인해본 결과 이 이슈는 출제하신 분의 실수가 아니라,
    년에서 주차를 표현하는 방식이 여러가지가 존재하기 때문에 생긴 이슈였습니다.
-   이 이슈는 Wikipedia의 [[https://en.wikipedia.org/wiki/Week][Week 페이지]] 의 'Week numbering' 섹션에 자세하게
+   이 이슈는 위키피디아의 [[https://en.wikipedia.org/wiki/Week][Week 페이지]] 의 'Week numbering' 섹션에 자세하게
    설명되어 있습니다. 간략하게 요약하면, 년에서 주차를 계산하는 방법식은
    대표적으로 유럽에서 주로 사용하는 ISO8601 방식과 북미에서 주로 사용하는
    방식이 존재하며 아래와 같은 차이점이 있다는 내용입니다.
@@ -301,10 +301,10 @@
                      ,DAYOFMONTH(`date_string`)             AS dom           -- day of month
                      ,DAYOFWEEK(`date_string`)              AS dow           -- day of week( 1 - sunday, 2 - monday ... )
                      ,WEEKOFYEAR(`date_string`)             AS woy           -- week of year
-                     ,lpad(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
+                     ,LPAD(DAYOFMONTH(`date_string`),2,'0') AS dom_f         -- left paded day of month string( 1 -> 01 )
              FROM
              (
-                 SELECT      concat(?,'-',n) as date_string                  -- parameterize
+                 SELECT      CONCAT(?,'-',n) AS date_string                  -- parameterize
                  FROM
                  (
                      SELECT '1' AS n                                         -- Make dynamic table in foolish way due to MySQL dosn't have generator
@@ -324,15 +324,15 @@
      GROUP BY `woy`
    #+END_SRC
 
-   지금까지 진행한 결과를  달력형식으로 보여주는것은 행(Row) 형태로 표현된
-   자료(narrow, stacked, tall skinny)를 고정된 열(Column) 형태로 표현된
+   지금까지 진행한 결과를  달력형식으로 보여주는것은 행(row) 형태로 표현된
+   자료(narrow, stacked, tall skinny)를 고정된 열(column) 형태로 표현된
    자료(wide, unstacked, short fat) 형태로 표현하는 [[https://en.wikipedia.org/wiki/Wide_and_narrow_data][변환작업]] 입니다.
 
    역시 MySQL은 이 작업을 위한 [[http://www.postgresql.org/docs/9.2/static/tablefunc.html][우아한 방법]] 을 [[http://stackoverflow.com/questions/14084503/postgresql-convert-columns-to-rows-transpose][제공하지않기 떄문에]] 일반적으로
    사용하는 GROUP BY와 CASE WHEN 을 사용하는 방식으로 [[http://stackoverflow.com/questions/2099198/sql-transpose-rows-as-columns][문제를 해결합니다]]. 이
-   기법은 GROUP BY를 사용한 뒤 집합(Aggregate)함수 내부에서 CASE WHEN 문을
+   기법은 GROUP BY를 사용한 뒤 집합(aggregate)함수 내부에서 CASE WHEN 문을
    조건분기처럼 사용할수 있는 특성을 이용한 방법으로, MySQL에서 행형태로 표현된
-   자료를 열형태로 변환(Pivot) 할때 자주 사용하는 방법입니다.
+   자료를 열형태로 변환(pivot) 할때 자주 사용하는 방법입니다.
 
    이 방법을 통해서 각각의 행의 dow 값에 따라 적절한 dom_f 값을 지정한 '요일'을
    나타내는 열에 나타내서 최종적으로 달력과 같은 모양을 만들어 낼 수 잇습니다.
@@ -347,4 +347,4 @@
   좋겠습니다.
 
   정리한 내용중 잘못된 내용이나 궁금한점, 혹은 더 나은 방법에 대한 조언은
-  개인적인 연락([[https://twitter.com/y0ngbin/][@y0ngbin]])이나 Github 이슈를 통해 남겨주시기 바랍니다.
+  개인적인 연락([[https://twitter.com/y0ngbin/][@y0ngbin]])이나 [[https://github.com/yongbin/parameterize-calendar-mysql/issues][Github 이슈]]를 통해 남겨주시기 바랍니다.
